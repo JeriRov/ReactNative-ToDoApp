@@ -1,19 +1,21 @@
-import {React, useState} from 'react';
-import { Text, View, ImageBackground, TextInput, Button, KeyboardAvoidingView, Platform} from 'react-native';
+import React, {useState} from 'react';
+import { Text, View, ImageBackground, TextInput, Button, KeyboardAvoidingView } from 'react-native';
 import AppStyles from '../styles/AppStyles';
 import InlineTextButton from '../components/InlineTextButton';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, sendEmailVerification} from "firebase/auth";
 
-export default function SignUp({navigation}) {
+export default function SignUp({navigation}: any) {
   const backgroundImg = require('../assets/background.png')
 
   let [email, setEmail] = useState('')
+  let [username, setUsername] = useState('')
   let [password, setPassword] = useState('')
   let [confirmPassword, setConfirmPassword] = useState('')
   let [validationMessage, setValidationMessage] = useState('')
 
-  let validateAndSet = (value, valueToCompare, setValue) =>{
+  let validateAndSet = (value: string, valueToCompare: string, setValue: Function) =>{
     if(value !== valueToCompare) {
       setValidationMessage('Password do not match!')
     } else {
@@ -22,11 +24,25 @@ export default function SignUp({navigation}) {
     setValue(value)
   }
 
+  let saveUsername = async () => {
+    let user = {
+      id: '',
+      username: username,
+      userId: auth.currentUser!.uid,
+    }
+    const docRef = await addDoc(collection(db, "user"), user);
+    const washingtonRef = doc(db, "user", docRef.id);
+    await updateDoc(washingtonRef, {
+      id: user.id
+    });
+  }
+
   let signUp = () => {
     if(password === confirmPassword){
       createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        sendEmailVerification(auth.currentUser)
+        saveUsername()
+        sendEmailVerification(auth.currentUser!)
         navigation.navigate('Main', {user: userCredential.user})
       })
       .catch((error) => {
@@ -38,7 +54,7 @@ export default function SignUp({navigation}) {
 
   return (
     <ImageBackground style={AppStyles.imageContainer} source={backgroundImg}>
-      <KeyboardAvoidingView style={AppStyles.backgroundCover} behavior={Platform.OS === 'ios' ? "padding" : null}
+      <KeyboardAvoidingView style={AppStyles.backgroundCover}
       keyboardVerticalOffset={60}>
         <Text style={[AppStyles.lightText, AppStyles.header]}>Sign Up</Text>
         <Text style={[AppStyles.validationError]}>{validationMessage}</Text>
@@ -48,6 +64,12 @@ export default function SignUp({navigation}) {
         placeholderTextColor='#BEBEBE'
         value={email}
         onChangeText={setEmail}/>
+
+        <TextInput style={[AppStyles.textInput, AppStyles.lightText, AppStyles.lightTextInput]} 
+        placeholder='Username'
+        placeholderTextColor='#BEBEBE'
+        value={username}
+        onChangeText={setUsername}/>
 
         <TextInput style={[AppStyles.textInput, AppStyles.lightText, AppStyles.lightTextInput]}
         placeholder='Password' 

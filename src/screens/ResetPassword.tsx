@@ -1,11 +1,11 @@
-import {React, useState} from 'react';
-import { Text, View, ImageBackground, TextInput, Button, KeyboardAvoidingView, Platform} from 'react-native';
+import React, {useState} from 'react';
+import { Text, View, ImageBackground, TextInput, Button, KeyboardAvoidingView} from 'react-native';
 import AppStyles from '../styles/AppStyles';
 import InlineTextButton from '../components/InlineTextButton';
 import { auth } from '../../firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
 
-export default function ResetPassword({navigation}) {
+export default function ResetPassword({navigation} : any) {
   const backgroundImg = require('../assets/background.png')
 
   let [email, setEmail] = useState('')
@@ -23,7 +23,7 @@ export default function ResetPassword({navigation}) {
 
   return (
     <ImageBackground style={AppStyles.imageContainer} source={backgroundImg}>
-      <KeyboardAvoidingView style={AppStyles.backgroundCover} behavior={Platform.OS === "ios" ? "padding" : null}
+      <KeyboardAvoidingView style={AppStyles.backgroundCover}
       keyboardVerticalOffset={60}>
         <Text style={[AppStyles.lightText, AppStyles.header]}>Reset Password</Text>
         <Text style={AppStyles.validationError}>{validationMessage}</Text>

@@ -6,7 +6,7 @@ import {
 } from 'react-native-gesture-handler'
 import TaskItem from './TaskItem'
 import { makeStyledComponent } from '../utils/styled'
-import { RefreshControl, Text } from 'react-native'
+import { RefreshControl } from 'react-native'
 const StyledView = makeStyledComponent(View)
 const StyledScrollView = makeStyledComponent(ScrollView)
 

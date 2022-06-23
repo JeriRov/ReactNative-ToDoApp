@@ -88,6 +88,7 @@ const TaskItem = (props: Props) => {
         w="full"
         px={4}
         py={2}
+        my={-0.1}
         bg={useColorModeValue('warmGray.50', 'primary.900')}
       >
         <Box width={30} height={30} mr={2}>
@@ -105,6 +106,7 @@ const TaskItem = (props: Props) => {
             placeholder="Task"
             value={subject}
             variant="unstyled"
+            selectionColor={'blue.500'}
             fontSize={19}
             px={1}
             py={0}

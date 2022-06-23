@@ -1,8 +1,14 @@
 import { Text, Pressable } from 'react-native';
 import AppStyles from '../styles/AppStyles';
 
-export default function InlineTextButton(props) {
-  let style = {};
+interface Props{
+  color: string
+  text: string
+  onPress: () => void
+}
+
+export default function InlineTextButton(props: Props) {
+  let style  = {color: ''};
   if (props.color) {
     style.color = props.color
   };
@@ -10,7 +16,7 @@ export default function InlineTextButton(props) {
     <Pressable onPress={props.onPress}>
       {({ pressed }) => (
         <Text 
-          style={[pressed ? AppStyles.pressedInlineTextButton : AppStyles.inlineTextButton, style]}>
+          style={[pressed ? AppStyles.pressedInlineTextButton : AppStyles.inlineTextButtonColor, style]}>
             {props.text}
         </Text>
       )}

@@ -1,11 +1,11 @@
-import {React, useState} from 'react';
+import React, {useState} from 'react';
 import { Text, View, ImageBackground, TextInput, Button, KeyboardAvoidingView, Platform} from 'react-native';
 import AppStyles from '../styles/AppStyles';
 import InlineTextButton from '../components/InlineTextButton';
 import { auth } from '../../firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
-export default function Login({navigation}) {
+export default function Login({navigation}: any) {
   const backgroundImg = require('../assets/background.png')
 
   if(auth.currentUser){
@@ -40,7 +40,7 @@ export default function Login({navigation}) {
 
   return (
     <ImageBackground style={AppStyles.imageContainer} source={backgroundImg}>
-      <KeyboardAvoidingView style={AppStyles.backgroundCover} behavior={Platform.OS === "ios" ? "padding" : null}
+      <KeyboardAvoidingView style={AppStyles.backgroundCover} 
       keyboardVerticalOffset={60}>
         <Text style={[AppStyles.lightText, AppStyles.header]}>Login</Text>
         <Text style={AppStyles.validationError}>{validationMessage}</Text>

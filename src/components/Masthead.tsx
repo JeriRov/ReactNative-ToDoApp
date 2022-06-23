@@ -8,7 +8,7 @@ interface Props {
   children: React.ReactNode
 }
 
-const Masthead = ({ title, image, children }: Props) => {
+const Masthead = ({ title, image, children}: Props) => {
   return (
     <VStack h="300px" pb={5}>
       <Image
@@ -23,7 +23,7 @@ const Masthead = ({ title, image, children }: Props) => {
         alt="masthead image"
       />
       {children}
-      <Box flex={1} />
+      <Box flex={1}/>
       <Heading color="white" p={6} size="xl">
         {title}
       </Heading>

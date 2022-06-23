@@ -33,7 +33,15 @@ const MenuButton = ({ active, icon, children, ...props }: Props) => {
       bg={active ? undefined : 'transparent'}
       variant="solid"
       justifyContent="flex-start"
-      leftIcon={<Icon as={Feather} name={icon} size="sm" opacity={0.5} color={useColorModeValue('gray.700', 'white')}/>}
+      leftIcon={
+        <Icon
+          as={Feather}
+          name={icon}
+          size="sm"
+          opacity={0.5}
+          color={useColorModeValue('gray.700', 'white')}
+        />
+      }
       {...props}
     >
       {children}

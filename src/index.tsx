@@ -22,7 +22,6 @@ const App = () => {
         overlayColor: '#00000000'
       }}
     >
-      
       <Drawer.Screen name="Login" component={Login} />
       <Drawer.Screen name="SignUp" component={SignUp} />
       <Drawer.Screen name="ResetPassword" component={ResetPassword} />

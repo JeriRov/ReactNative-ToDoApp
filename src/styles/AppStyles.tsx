@@ -2,13 +2,11 @@ import { StyleSheet} from 'react-native';
 export default StyleSheet.create({
   imageContainer: {
       flex: 1,
-      backgroundColor: '#fff',
       justifyContent: 'center',
       alignItems: 'center'
     },
     container:{
       flex: 1,
-      backgroundColor: '#fff',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 16
@@ -56,10 +54,10 @@ export default StyleSheet.create({
       alignSelf: 'stretch',
       padding: 8,
       borderBottomWidth: 2,
-      marginVertical: 8
+      marginVertical: 0
     },
     lightTextInput:{
-      borderBottomColor: '#EEE'
+      borderBottomColor: '#ccc'
     },
     inlineTextButtonColor:{
       color: '#B2D8D8'
@@ -78,5 +76,10 @@ export default StyleSheet.create({
     },
     darkTextInput: {
       borderBottomColor: '#000'
+    },
+    usernameTextInput:{
+      fontSize: 25,
+      textAlign: 'center',
+      marginTop: '6%'
     }
   });

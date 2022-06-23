@@ -7,7 +7,7 @@ import Masthead from '../components/Masthead'
 import NavBar from '../components/Navbar'
 import { auth, db } from "../../firebase";
 import { collection, addDoc, query, where, getDocs, deleteDoc, doc, updateDoc, orderBy } from "firebase/firestore";
-
+import { useFocusEffect } from '@react-navigation/native'
 
 interface TaskItem {
   id: string;
@@ -17,13 +17,36 @@ interface TaskItem {
   position: number;
 }
 
+interface User {
+  id: string;
+  username: string;
+  userId: string;
+}
+
 export default function MainScreen() {
   const initialData: TaskItem[] = []
   const [data, setData] = useState(initialData)
+  
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   let [isLoading, setIsLoading] = useState(true)
   let [isRefreshing, setIsRefreshing] = useState(false)
-  
+
+  const [user, setUser] = useState({} as User)
+  const loadUserData = useCallback(async () => {
+    const q = query(collection(db, "user"), where("userId", "==", auth.currentUser!.uid));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+    let userDoc = doc.data()
+    user.id = doc.id
+    user.userId = userDoc.userId
+    user.username = userDoc.username
+})
+}, [user])
+useFocusEffect(
+  useCallback(() => {
+    loadUserData()
+}, [loadUserData()]))
+
   const loadData = async () => {
     const q = query(collection(db, "todos"), where("userId", "==", auth.currentUser!.uid), orderBy('position', 'desc'));
     const querySnapshot = await getDocs(q);
@@ -38,7 +61,6 @@ export default function MainScreen() {
         position: toDo.position
       })
     })
-    console.log(initialData, "lll")
     setData(initialData)
     setIsLoading(false)
     setIsRefreshing(false)
@@ -59,7 +81,7 @@ export default function MainScreen() {
   const remove = async (item: TaskItem) => {
     await deleteDoc(doc(db, "todos", item.id));
   }
-
+  
   const handleToggleTaskItem = useCallback(item => {
     setData(prevData => {
       const newData = [...prevData]
@@ -72,7 +94,6 @@ export default function MainScreen() {
       return newData
     })
   }, [])
-  
   const handleChangeTaskItemSubject = useCallback((item, newSubject) => {
     setData(prevData => {
       const newData = [...prevData]
@@ -85,7 +106,6 @@ export default function MainScreen() {
       return newData
     })
   }, [])
-
   const handleFinishEditingTaskItem = useCallback(_item => {
     setEditingItemId(null)
   }, [])
@@ -95,8 +115,6 @@ export default function MainScreen() {
   const handleRemoveItem = useCallback(item => {
     setData(prevData => {
       const newData = prevData.filter(i => i !== item)
-      console.log(item.id)
-      
       remove(item)
       return newData
     })
@@ -109,7 +127,7 @@ export default function MainScreen() {
       w="full"
     >
       <Masthead
-        title="What's up!"
+        title={"What's up " + user.username + "!"}
         image={require('../assets/background.png')}
       >
         <NavBar />
