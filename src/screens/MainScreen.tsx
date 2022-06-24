@@ -151,8 +151,8 @@ useFocusEffect(
           editingItemId={editingItemId}
           refreshing={isRefreshing}
           onRefreshing={() => {
-            loadData()
             setIsRefreshing(true);
+            loadData()
           }}
         />
       </VStack>

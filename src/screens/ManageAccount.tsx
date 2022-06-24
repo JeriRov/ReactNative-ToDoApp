@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { SafeAreaView } from 'react-native'
+import { RefreshControl, SafeAreaView } from 'react-native'
 import AppStyles from '../styles/AppStyles'
 import { auth, db } from '../../firebase'
 import {
@@ -23,8 +23,12 @@ import {
   useColorModeValue,
   VStack,
   Text,
-  IconButton
+  IconButton,
+  Modal,
+  View,
+  Icon
 } from 'native-base'
+import { AntDesign } from '@expo/vector-icons'
 import AnimatedColorBox from '../components/AnimatedColorBox'
 import Masthead from '../components/Masthead'
 import NavBar from '../components/Navbar'
@@ -53,14 +57,19 @@ export default function ManageAccount({ navigation }: any) {
   const [user, setUser] = useState({} as User)
   let [username, setUsername] = useState('')
   const [avatar, setAvatar] = useState('')
+  const [background, setBackground] = useState('')
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showModal, setShowModal] = useState(false)
 
   const loadData = useCallback(async () => {
-    if (avatar === '') {
-      const avatar = ref(storage, `avatars/${auth.currentUser?.uid}`)
-      getDownloadURL(avatar!).then(url => {
-        setAvatar(url)
-      })
-    }
+    const avatar = ref(storage, `avatars/${auth.currentUser?.uid}`)
+    getDownloadURL(avatar!).then(url => {
+      setAvatar(url)
+    })
+    const background = ref(storage, `backgrounds/${auth.currentUser?.uid}`)
+    getDownloadURL(background!).then(url => {
+      setBackground(url)
+    })
     const qUser = query(
       collection(db, 'user'),
       where('userId', '==', auth.currentUser!.uid)
@@ -73,7 +82,8 @@ export default function ManageAccount({ navigation }: any) {
       user.username = userDoc.username
     })
     setUsername(user.username)
-  }, [user])
+    setIsRefreshing(false)
+  }, [])
 
   useFocusEffect(
     useCallback(() => {
@@ -144,7 +154,8 @@ export default function ManageAccount({ navigation }: any) {
     }
   }
 
-  const pickImage = async () => {
+  const pickBackground = async () => {
+    setShowModal(false)
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
@@ -154,11 +165,26 @@ export default function ManageAccount({ navigation }: any) {
     console.log(result)
 
     if (!result.cancelled) {
-      uploadToFirebase(result.uri)
+      uploadToFirebase('backgrounds', result.uri)
     }
   }
 
-  const uploadToFirebase = async (url: string) => {
+  const pickAvatar = async () => {
+    setShowModal(false)
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1
+    })
+    console.log(result)
+
+    if (!result.cancelled) {
+      uploadToFirebase('avatars', result.uri)
+    }
+  }
+
+  const uploadToFirebase = async (folder: string, url: string) => {
     const blob: Blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       // on load
@@ -176,9 +202,9 @@ export default function ManageAccount({ navigation }: any) {
       xhr.send()
     })
 
-    const fileRef = ref(storage, `avatars/${auth.currentUser?.uid}`)
+    const fileRef = ref(storage, `${folder}/${auth.currentUser?.uid}`)
     await uploadBytes(fileRef, blob).then(() => {
-      setAvatar(url)
+      loadData()
     })
   }
 
@@ -188,15 +214,23 @@ export default function ManageAccount({ navigation }: any) {
       bg={useColorModeValue('warmGray.50', 'primary.900')}
       w="full"
     >
-      <Masthead title={''} image={require('../assets/background.png')}>
+      <Masthead
+        title={''}
+        image={
+          background != ''
+            ? { uri: background }
+            : require('../assets/background.png')
+        }
+      >
         <Button
-          onPress={pickImage}
+          onLongPress={() => setShowModal(true)}
           w="full"
           h="full"
           position={'absolute'}
           opacity={0}
         />
         <NavBar />
+
         <Avatar
           alignSelf="center"
           bottom={'-15%'}
@@ -211,8 +245,87 @@ export default function ManageAccount({ navigation }: any) {
           borderWidth={3}
           zIndex={20}
         />
+
+        <Button
+          onPress={() => setShowModal(true)}
+          h={'45%'}
+          w={'33%'}
+          opacity={0}
+          borderRadius={100}
+          alignSelf={'center'}
+          bottom={'-10%'}
+          zIndex={30}
+          position={'absolute'}
+          bgColor={'red.900'}
+        />
+
+        <Modal
+          animationPreset="slide"
+          w="full"
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          _backdrop="red"
+        >
+          <Modal.Content
+            bgColor={useColorModeValue('primary.50', 'primary.700')}
+            color={'white'}
+            w="full"
+            mb={0}
+            mt="auto"
+          >
+            <Button.Group flexDirection={'column'} w="full">
+              <Button
+                onPress={pickAvatar}
+                variant={'ghost'}
+                w="full"
+                leftIcon={
+                  <Icon
+                    as={Feather}
+                    name="camera"
+                    size="sm"
+                    color={useColorModeValue('gray.700', 'white')}
+                  />
+                }
+              >
+                <Text fontWeight={'bold'}>Change avatar</Text>
+              </Button>
+
+              <Button
+                onPress={pickBackground}
+                variant={'ghost'}
+                w="full"
+                leftIcon={
+                  <Icon
+                    as={Feather}
+                    name="image"
+                    size="sm"
+                    color={useColorModeValue('gray.700', 'white')}
+                  />
+                }
+              >
+                <Text fontWeight={'bold'}>Change background</Text>
+              </Button>
+
+              <Button
+                variant={'ghost'}
+                w="full"
+                leftIcon={
+                  <Icon
+                    as={Feather}
+                    name="trash-2"
+                    size="sm"
+                    color={useColorModeValue('gray.700', 'white')}
+                  />
+                }
+              >
+                <Text fontWeight={'bold'}>Delete avatar</Text>
+              </Button>
+            </Button.Group>
+          </Modal.Content>
+        </Modal>
+
         <IconButton
-          onPress={pickImage}
+          onPress={pickAvatar}
           borderRadius={100}
           zIndex={50}
           left={'80%'}
@@ -242,15 +355,25 @@ export default function ManageAccount({ navigation }: any) {
           fontSize={25}
           px={1}
           py={0}
-					selectionColor={'blue.500'}
+          selectionColor={'blue.500'}
           blurOnSubmit
           onChangeText={changeUsername}
           value={username}
           textAlign={'center'}
           top={'7%'}
-          zIndex={5}
+          zIndex={50}
         />
-        <ScrollView>
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => {
+                setIsRefreshing(true)
+                loadData()
+              }}
+            />
+          }
+        >
           <SafeAreaView style={AppStyles.container}>
             <Input
               variant="unstyled"

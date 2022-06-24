@@ -26,7 +26,7 @@ interface TaskListProps {
   onFinishEditing: (item: TaskItemData) => void
   onPressLabel: (item: TaskItemData) => void
   onRemoveItem: (item: TaskItemData) => void
-  refreshing: boolean,
+  refreshing: boolean
   onRefreshing: () => void
 }
 
@@ -70,7 +70,6 @@ export const AnimatedTaskItem = (props: TaskItemProps) => {
   const handleRemove = useCallback(() => {
     onRemove(data)
   }, [data, onRemove])
-
 
   return (
     <StyledView
@@ -121,14 +120,12 @@ export default function TaskList(props: TaskListProps) {
   const refScrollView = useRef(null)
   return (
     <StyledScrollView
-    ref={refScrollView} 
-    w="full"
-    refreshControl={
-      <RefreshControl
-        refreshing={refreshing}
-        onRefresh={onRefreshing}
-      /> 
-    }>
+      ref={refScrollView}
+      w="full"
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefreshing} />
+      }
+    >
       <AnimatePresence>
         {data.map(item => (
           <AnimatedTaskItem
