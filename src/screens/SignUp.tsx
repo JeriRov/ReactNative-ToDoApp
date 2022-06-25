@@ -27,14 +27,17 @@ export default function SignUp({navigation}: any) {
   let saveUsername = async () => {
     let user = {
       id: '',
+      theme: 'light',
       username: username,
       userId: auth.currentUser!.uid,
     }
     const docRef = await addDoc(collection(db, "user"), user);
-    const washingtonRef = doc(db, "user", docRef.id);
-    await updateDoc(washingtonRef, {
+    const userRef = doc(db, "user", docRef.id);
+    user.id = userRef.id
+    await updateDoc(userRef, {
       id: user.id
     });
+    console.log("USER OOOID: ",user.id)
   }
 
   let signUp = () => {
@@ -48,7 +51,6 @@ export default function SignUp({navigation}: any) {
       .catch((error) => {
         setValidationMessage(error.message);
       });
-    
     }
   }
 

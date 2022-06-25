@@ -8,7 +8,6 @@ import SignUp from './screens/SignUp'
 import ResetPassword from './screens/ResetPassword'
 import ManageAccount from './screens/ManageAccount'
 
-
 const Drawer = createDrawerNavigator()
 
 const App = () => {
@@ -22,6 +21,7 @@ const App = () => {
         overlayColor: '#00000000'
       }}
     >
+      
       <Drawer.Screen name="Login" component={Login} />
       <Drawer.Screen name="SignUp" component={SignUp} />
       <Drawer.Screen name="ResetPassword" component={ResetPassword} />

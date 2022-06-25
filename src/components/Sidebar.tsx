@@ -6,43 +6,44 @@ import {
   Avatar,
   Heading,
   IconButton,
-  useColorModeValue
+  useColorModeValue,
+  View,
+  Spinner
 } from 'native-base'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import AnimatedColorBox from './AnimatedColorBox'
 import ThemeToggle from './ThemeToggle'
 import { Feather } from '@expo/vector-icons'
 import MenuButton from './MenuButton'
-import { signOut } from "firebase/auth";
+import { signOut } from 'firebase/auth'
 import { useFocusEffect } from '@react-navigation/native'
-import { auth, db } from "../../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from '../../firebase'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { getAvatar, getUser } from '../user'
 
 interface User {
-  id: string;
-  username: string;
-  userId: string;
+  id: string
+  username: string
+  userId: string
 }
 
 const Sidebar = (props: DrawerContentComponentProps) => {
   const { state, navigation } = props
   const currentRoute = state.routeNames[state.index]
-
   const [user, setUser] = useState({} as User)
+  const [avatar, setAvatar] = useState('')
+
   const loadData = useCallback(async () => {
-    const qUser = query(collection(db, "user"), where("userId", "==", auth.currentUser!.uid));
-    const querySnapshotUser = await getDocs(qUser);
-    querySnapshotUser.forEach((doc) => {
-    let userDoc = doc.data()
-    user.id = doc.id
-    user.userId = userDoc.userId
-    user.username = userDoc.username
-})
-}, [user])
-useFocusEffect(
-  useCallback(() => {
-    loadData()
-}, [loadData()]))
+    let userData = await getUser()
+    user.id = userData.id
+    user.username = userData.username
+    setAvatar(await getAvatar())
+  }, [user])
+  useFocusEffect(
+    useCallback(() => {
+      loadData()
+    }, [loadData()])
+  )
 
   const handlePressBackButton = useCallback(() => {
     navigation.closeDrawer()
@@ -55,13 +56,13 @@ useFocusEffect(
   }, [navigation])
   const logout = useCallback(() => {
     signOut(auth).then(() => {
-        navigation.navigate('Login')
+      navigation.navigate('Login')
     })
   }, [navigation])
 
-const handlePressAccountButton = useCallback(() => {
-  navigation.navigate('ManageAccount')
-}, [navigation])
+  const handlePressAccountButton = useCallback(() => {
+    navigation.navigate('ManageAccount')
+  }, [navigation])
 
   return (
     <AnimatedColorBox
@@ -71,10 +72,11 @@ const handlePressAccountButton = useCallback(() => {
       p={7}
     >
       <VStack flex={1} space={2}>
-        <HStack 
-        justifyContent="flex-end"
-        flexDirection={'column'}
-        alignItems={'flex-end'}>
+        <HStack
+          justifyContent="flex-end"
+          flexDirection={'column'}
+          alignItems={'flex-end'}
+        >
           <IconButton
             onPress={handlePressBackButton}
             borderRadius={100}
@@ -89,7 +91,11 @@ const handlePressAccountButton = useCallback(() => {
           />
         </HStack>
         <Avatar
-          source={require('../assets/profile-image.png')}
+          source={
+            avatar != ''
+              ? { uri: avatar }
+              : require('../assets/profile-image.png')
+          }
           size="xl"
           borderRadius={100}
           mb={6}

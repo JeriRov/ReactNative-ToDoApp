@@ -8,7 +8,7 @@ interface Props {
   children: React.ReactNode
 }
 
-const Masthead = ({ title, image, children}: Props) => {
+const Masthead = ({ title, image, children }: Props) => {
   return (
     <VStack h="300px" pb={5}>
       <Image

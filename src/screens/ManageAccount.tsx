@@ -1,21 +1,6 @@
 import React, { useCallback, useState } from 'react'
-import { RefreshControl, SafeAreaView } from 'react-native'
+import { RefreshControl, SafeAreaView, _Text } from 'react-native'
 import AppStyles from '../styles/AppStyles'
-import { auth, db } from '../../firebase'
-import {
-  updatePassword,
-  signInWithEmailAndPassword,
-  deleteUser
-} from 'firebase/auth'
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  writeBatch,
-  updateDoc,
-  doc
-} from 'firebase/firestore'
 import {
   Avatar,
   Button,
@@ -25,27 +10,30 @@ import {
   Text,
   IconButton,
   Modal,
+  Icon,
   View,
-  Icon
+  Spinner
 } from 'native-base'
-import { AntDesign } from '@expo/vector-icons'
 import AnimatedColorBox from '../components/AnimatedColorBox'
 import Masthead from '../components/Masthead'
 import NavBar from '../components/Navbar'
 import { ScrollView } from 'react-native-gesture-handler'
 import { useFocusEffect } from '@react-navigation/native'
-import { storage } from '../../firebase'
-import {
-  deleteObject,
-  getDownloadURL,
-  ref,
-  uploadBytes
-} from 'firebase/storage'
-import * as ImagePicker from 'expo-image-picker'
 import { Feather } from '@expo/vector-icons'
+import {
+  changeAvatar,
+  changeBackground,
+  deleteFullUser,
+  getAvatar,
+  getBackground,
+  getUser,
+  setUserUsername,
+  updateUserPassword
+} from '../user'
 
 interface User {
   id: string
+  theme: string
   username: string
   userId: string
 }
@@ -60,28 +48,18 @@ export default function ManageAccount({ navigation }: any) {
   const [background, setBackground] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(true)
+  const [isAvatarLoading, setIsAvatarLoading] = useState(true)
 
   const loadData = useCallback(async () => {
-    const avatar = ref(storage, `avatars/${auth.currentUser?.uid}`)
-    getDownloadURL(avatar!).then(url => {
-      setAvatar(url)
-    })
-    const background = ref(storage, `backgrounds/${auth.currentUser?.uid}`)
-    getDownloadURL(background!).then(url => {
-      setBackground(url)
-    })
-    const qUser = query(
-      collection(db, 'user'),
-      where('userId', '==', auth.currentUser!.uid)
-    )
-    const querySnapshotUser = await getDocs(qUser)
-    querySnapshotUser.forEach(doc => {
-      let userDoc = doc.data()
-      user.id = doc.id
-      user.userId = userDoc.userId
-      user.username = userDoc.username
-    })
+    let userData = await getUser()
+    user.username = userData.username
     setUsername(user.username)
+    setAvatar(await getAvatar())
+    setIsAvatarLoading(false)
+    setBackground(await getBackground())
+    setIsBackgroundLoading(false)
+    user.id = userData.id
     setIsRefreshing(false)
   }, [])
 
@@ -93,119 +71,31 @@ export default function ManageAccount({ navigation }: any) {
 
   let changeUsername = async (text: string) => {
     setUsername(text)
-    const washingtonRef = doc(db, 'user', user.id)
-    await updateDoc(washingtonRef, {
-      username: text
-    })
+    await setUserUsername(text, user.id)
   }
 
-  let updateUserPassword = () => {
-    signInWithEmailAndPassword(auth, auth.currentUser!.email!, currentPassword)
-      .then(() => {
-        updatePassword(auth.currentUser!, newPassword)
-          .then(() => {
-            setNewPassword('')
-            setErrorMesage('')
-            setCurrentPassword('')
-          })
-          .catch(error => {
-            setErrorMesage(error.message)
-          })
-      })
-      .catch(error => {
-        setErrorMesage(error.message)
-      })
+  let updatePassword = () => {
+    updateUserPassword(
+      currentPassword,
+      setCurrentPassword,
+      newPassword,
+      setNewPassword,
+      setErrorMesage
+    )
   }
 
-  let deleteUserAndToDos = () => {
-    if (currentPassword === '') {
-      setErrorMesage('Must enter current password to delete account!')
-    } else {
-      signInWithEmailAndPassword(
-        auth,
-        auth.currentUser!.email!,
-        currentPassword
-      )
-        .then(userCredential => {
-          const user = userCredential.user
-          let batch = writeBatch(db)
-          const q = query(
-            collection(db, 'todos'),
-            where('userId', '==', user.uid)
-          )
-          getDocs(q).then(querySnapshot => {
-            querySnapshot.forEach(doc => {
-              batch.delete(doc.ref)
-            })
-            batch.commit()
-
-            deleteUser(user)
-              .then(() => {
-                navigation.navigate('Login')
-              })
-              .catch(error => {
-                setErrorMesage(error.message)
-              })
-          })
-        })
-        .catch(error => {
-          setErrorMesage(error.message)
-        })
-    }
+  let deleteUser = () => {
+    deleteFullUser(currentPassword, setErrorMesage, navigation)
   }
 
   const pickBackground = async () => {
     setShowModal(false)
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1
-    })
-    console.log(result)
-
-    if (!result.cancelled) {
-      uploadToFirebase('backgrounds', result.uri)
-    }
+    changeBackground(loadData)
   }
 
   const pickAvatar = async () => {
     setShowModal(false)
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1
-    })
-    console.log(result)
-
-    if (!result.cancelled) {
-      uploadToFirebase('avatars', result.uri)
-    }
-  }
-
-  const uploadToFirebase = async (folder: string, url: string) => {
-    const blob: Blob = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      // on load
-      xhr.onload = function () {
-        resolve(xhr.response)
-      }
-      // on error
-      xhr.onerror = function (e) {
-        console.log(e)
-        reject(new TypeError('Network request failed'))
-      }
-      // on complete
-      xhr.responseType = 'blob'
-      xhr.open('GET', url)
-      xhr.send()
-    })
-
-    const fileRef = ref(storage, `${folder}/${auth.currentUser?.uid}`)
-    await uploadBytes(fileRef, blob).then(() => {
-      loadData()
-    })
+    changeAvatar(loadData)
   }
 
   return (
@@ -230,7 +120,13 @@ export default function ManageAccount({ navigation }: any) {
           opacity={0}
         />
         <NavBar />
-
+        {isBackgroundLoading ? (
+          <View position={'absolute'} alignSelf="center" mt={'35%'}>
+            <Spinner size={'lg'} />
+          </View>
+        ) : (
+          <></>
+        )}
         <Avatar
           alignSelf="center"
           bottom={'-15%'}
@@ -245,7 +141,18 @@ export default function ManageAccount({ navigation }: any) {
           borderWidth={3}
           zIndex={20}
         />
-
+        {isAvatarLoading ? (
+          <View
+            position={'absolute'}
+            alignSelf="center"
+            zIndex={100}
+            mt={'64%'}
+          >
+            <Spinner size={'lg'} />
+          </View>
+        ) : (
+          <></>
+        )}
         <Button
           onPress={() => setShowModal(true)}
           h={'45%'}
@@ -259,6 +166,22 @@ export default function ManageAccount({ navigation }: any) {
           bgColor={'red.900'}
         />
 
+        <IconButton
+          onPress={pickAvatar}
+          borderRadius={100}
+          zIndex={50}
+          left={'80%'}
+          variant={'solid'}
+          width="10%"
+          size={'sm'}
+          bg={useColorModeValue('blue.500', 'blue.100')}
+          _icon={{
+            as: Feather,
+            name: 'camera',
+            size: 6,
+            color: useColorModeValue('primary.50', 'primary.900')
+          }}
+        />
         <Modal
           animationPreset="slide"
           w="full"
@@ -282,12 +205,14 @@ export default function ManageAccount({ navigation }: any) {
                   <Icon
                     as={Feather}
                     name="camera"
-                    size="sm"
+                    size="2xl"
                     color={useColorModeValue('gray.700', 'white')}
                   />
                 }
               >
-                <Text fontWeight={'bold'}>Change avatar</Text>
+                <Text fontWeight={'bold'} fontSize={16}>
+                  Change avatar
+                </Text>
               </Button>
 
               <Button
@@ -298,12 +223,14 @@ export default function ManageAccount({ navigation }: any) {
                   <Icon
                     as={Feather}
                     name="image"
-                    size="sm"
+                    size="2xl"
                     color={useColorModeValue('gray.700', 'white')}
                   />
                 }
               >
-                <Text fontWeight={'bold'}>Change background</Text>
+                <Text fontWeight={'bold'} fontSize={16}>
+                  Change background
+                </Text>
               </Button>
 
               <Button
@@ -313,33 +240,18 @@ export default function ManageAccount({ navigation }: any) {
                   <Icon
                     as={Feather}
                     name="trash-2"
-                    size="sm"
+                    size="2xl"
                     color={useColorModeValue('gray.700', 'white')}
                   />
                 }
               >
-                <Text fontWeight={'bold'}>Delete avatar</Text>
+                <Text fontWeight={'bold'} fontSize={16}>
+                  Delete avatar
+                </Text>
               </Button>
             </Button.Group>
           </Modal.Content>
         </Modal>
-
-        <IconButton
-          onPress={pickAvatar}
-          borderRadius={100}
-          zIndex={50}
-          left={'80%'}
-          variant={'solid'}
-          width="10%"
-          size={'sm'}
-          bg={useColorModeValue('blue.500', 'blue.100')}
-          _icon={{
-            as: Feather,
-            name: 'camera',
-            size: 6,
-            color: useColorModeValue('primary.50', 'primary.900')
-          }}
-        />
       </Masthead>
       <VStack
         flex={1}
@@ -410,7 +322,7 @@ export default function ManageAccount({ navigation }: any) {
               mt={'25%'}
               size={'lg'}
               rounded={15}
-              onPress={updateUserPassword}
+              onPress={updatePassword}
               colorScheme={useColorModeValue('blue', 'blue.600')}
               bg={useColorModeValue('blue.600', 'blue.500')}
             >
@@ -418,7 +330,7 @@ export default function ManageAccount({ navigation }: any) {
             </Button>
 
             <Button
-              onPress={deleteUserAndToDos}
+              onPress={deleteUser}
               size={'lg'}
               mt={'5%'}
               rounded={15}
