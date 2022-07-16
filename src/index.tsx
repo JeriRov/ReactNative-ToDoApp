@@ -1,12 +1,12 @@
 import React from 'react'
 import { createDrawerNavigator } from '@react-navigation/drawer'
-import MainScreen from './screens/MainScreen'
-import AboutScreen from './screens/AboutScreen'
-import Sidebar from './components/Sidebar'
-import Login from './screens/Login'
-import SignUp from './screens/SignUp'
-import ResetPassword from './screens/ResetPassword'
-import ManageAccount from './screens/ManageAccount'
+import MainScreen from './screens/MainScreen/MainScreen'
+import AboutScreen from './screens/AboutScreen/AboutScreen'
+import Sidebar from './components/Sidebar/Sidebar'
+import Login from './screens/Login/Login'
+import SignUp from './screens/SignUp/SignUp'
+import ResetPassword from './screens/ResetPassword/ResetPassword'
+import ManageAccount from './screens/ManageAccount/ManageAccount'
 
 const Drawer = createDrawerNavigator()
 

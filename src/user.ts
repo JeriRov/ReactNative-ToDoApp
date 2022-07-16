@@ -1,4 +1,3 @@
-import React, { useCallback, useState } from 'react'
 import { auth, db } from '../firebase'
 import {
   updatePassword,
@@ -22,7 +21,6 @@ import {
   uploadBytes
 } from 'firebase/storage'
 import * as ImagePicker from 'expo-image-picker'
-import { useColorMode } from 'native-base'
 
 interface User {
   id: string
@@ -55,9 +53,10 @@ const getBackground = async () => {
 
 const getUser = async () => {
   let user = {} as User
+
   const q = query(
     collection(db, 'user'),
-    where('userId', '==', auth.currentUser!.uid)
+    where('userId', '==', auth.currentUser?.uid ? auth.currentUser.uid : '')
   )
   const querySnapshot = await getDocs(q)
   querySnapshot.forEach(doc => {
@@ -119,7 +118,6 @@ const changeBackground = async (load: Function) => {
     aspect: [4, 3],
     quality: 1
   })
-  console.log(result)
 
   if (!result.cancelled) {
     uploadToFirebase('backgrounds', result.uri).then(() => load())
@@ -133,7 +131,6 @@ const changeAvatar = async (load: Function) => {
     aspect: [4, 3],
     quality: 1
   })
-  console.log(result)
 
   if (!result.cancelled) {
     uploadToFirebase('avatars', result.uri).then(() => load())
