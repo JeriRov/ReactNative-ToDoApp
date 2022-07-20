@@ -25,10 +25,11 @@ import {
   updateDoc,
   orderBy
 } from 'firebase/firestore'
-import { useFocusEffect, useIsFocused } from '@react-navigation/native'
+import { useFocusEffect } from '@react-navigation/native'
 import { getBackground, getUser } from '../../user'
 import shortid from 'shortid'
 import { User, TaskItem } from './mainScreen.types'
+import { register, checkStatus, unregister } from '../../services/refreshingTasks'
 
 export default function MainScreen() {
   const initialData: TaskItem[] = []
@@ -37,21 +38,29 @@ export default function MainScreen() {
   const [isUserLoading, setIsUserLoading] = useState(true)
   const [isDataLoading, setIsDataLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [user, setUser] = useState({} as User)
+  const [user] = useState({} as User)
   const [background, setBackground] = useState('')
+  const [refreshTasks, setRefreshTasks] = useState(false)
   const { setColorMode } = useColorMode()
-  const [dragble, setDragble] = useState(false)
-
+  const date = new Date()
+  
   const loadData = async () => {
     const q = query(
       collection(db, 'todos'),
       where('userId', '==', auth.currentUser!.uid),
       orderBy('position', 'desc')
     )
+    let tasksIsRefresh = false
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach(doc => {
       let toDo = doc.data()
       toDo.id = doc.id
+      if(toDo.refreshing){
+        tasksIsRefresh = true 
+      }
+      if(refreshTasks && toDo.refreshing){
+        handleRefreshTasks(toDo)
+      }
       initialData.push({
         id: toDo.id,
         subject: toDo.subject,
@@ -61,10 +70,29 @@ export default function MainScreen() {
         position: toDo.position
       })
     })
+    if(!tasksIsRefresh){
+      unregister()
+    }
+    setRefreshTasks(false)
     setData(initialData)
     setIsRefreshing(false)
   }
-
+  
+  const handleRefreshTasks = useCallback(item => {
+    setData(prevData => {
+      const newData = [...prevData]
+      const index = prevData.indexOf(item)
+      newData[index] = {
+        ...item,
+        done: false
+      }
+      update(newData, index)
+      return newData
+    })
+  }, [])
+  if(!refreshTasks && date.getHours() == 0 && date.getMinutes() == 0){
+    setRefreshTasks(true)
+  }
   const loadUserData = async () => {
     let userData = await getUser()
     user.id = userData.id
@@ -76,7 +104,7 @@ export default function MainScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!!data.length) {
-        if (data[0].userId != auth.currentUser?.uid) {
+        if (data[0]!.userId != auth.currentUser?.uid) {
           loadData()
         }
       }
@@ -93,12 +121,12 @@ export default function MainScreen() {
   }
 
   const update = async (newData: TaskItem[], index: number) => {
-    const washingtonRef = doc(db, 'todos', newData[index].id)
+    const washingtonRef = doc(db, 'todos', newData[index]!.id)
     await updateDoc(washingtonRef, {
-      id: newData[index].id,
-      done: newData[index].done,
-      refreshing: newData[index].refreshing,
-      subject: newData[index].subject
+      id: newData[index]!.id,
+      done: newData[index]!.done,
+      refreshing: newData[index]!.refreshing,
+      subject: newData[index]!.subject
     })
   }
   const remove = async (item: TaskItem) => {
@@ -126,6 +154,13 @@ export default function MainScreen() {
         refreshing: !item.refreshing
       }
       update(newData, index)
+      checkStatus().then(result => {
+        console.log(result)
+        if(!result.isRegistered){
+          register()
+        }
+      })
+
       return newData
     })
   }, [])
@@ -154,6 +189,8 @@ export default function MainScreen() {
       return newData
     })
   }, [])
+
+
 
   return (
     <AnimatedColorBox
@@ -192,8 +229,6 @@ export default function MainScreen() {
             data={data}
             onToggleItem={handleToggleTaskItem}
             onToggleRefreshTask={handleToggleRefreshTaskItem}
-            dragble={dragble}
-            setDragble={(value: boolean) => setDragble(value)}
             onChangeSubject={handleChangeTaskItemSubject}
             onFinishEditing={handleFinishEditingTaskItem}
             onPressLabel={handlePressTaskItemLabel}

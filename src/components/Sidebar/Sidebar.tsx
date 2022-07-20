@@ -22,7 +22,7 @@ import { User } from './sidebar.types'
 const Sidebar = (props: DrawerContentComponentProps) => {
   const { state, navigation } = props
   const currentRoute = state.routeNames[state.index]
-  const [user, setUser] = useState({} as User)
+  const [user] = useState({} as User)
   const [avatar, setAvatar] = useState('')
 
   const loadData = useCallback(async () => {

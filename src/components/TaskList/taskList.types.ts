@@ -12,8 +12,6 @@ export interface TaskItemData {
 export interface TaskListProps {
   data: Array<TaskItemData>
   editingItemId: string | null
-  dragble: boolean
-  setDragble: (value: boolean) => void
   onToggleItem: (item: TaskItemData) => void
   onToggleRefreshTask: (item: TaskItemData) => void
   onChangeSubject: (item: TaskItemData, newSubject: string) => void

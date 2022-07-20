@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, Icon, IButtonProps, useColorModeValue } from 'native-base'
+import { Button, Icon, useColorModeValue } from 'native-base'
 import { Feather } from '@expo/vector-icons'
 import { Props } from './menuButton.types'
 

@@ -1,5 +1,4 @@
 import React from 'react'
-import { ImageSourcePropType } from 'react-native'
 import { Box, VStack, Heading, Image } from 'native-base'
 import { Props } from './masthead.types'
 

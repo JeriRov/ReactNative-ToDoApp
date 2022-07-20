@@ -82,10 +82,8 @@ export const AnimatedTaskItem = (props: TaskItemProps) => {
 export default function TaskList(props: TaskListProps) {
   const {
     data,
-    dragble,
     editingItemId,
     refreshing,
-    setDragble,
     onToggleItem,
     onToggleRefreshTask,
     onChangeSubject,

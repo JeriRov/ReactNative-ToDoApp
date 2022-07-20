@@ -5,7 +5,6 @@ import InlineTextButton from '../../components/InlineTextButton/InlineTextButton
 import { auth } from '../../../firebase'
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
 import { Modal, Text, Button, Spinner, View } from 'native-base'
-import { Feather } from '@expo/vector-icons'
 
 export default function Login({ navigation }: any) {
   const backgroundImg = require('../../assets/background.png')
@@ -29,7 +28,7 @@ export default function Login({ navigation }: any) {
     setShowModal(true)
     if (email !== '' && password !== '') {
       signInWithEmailAndPassword(auth, email, password)
-        .then(userCredential => {
+        .then(() => {
           setValidationMessage('')
           setEmail('')
           setPassword('')

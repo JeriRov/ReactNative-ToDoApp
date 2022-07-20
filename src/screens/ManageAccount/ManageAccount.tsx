@@ -36,7 +36,7 @@ export default function ManageAccount({ navigation }: any) {
   let [newPassword, setNewPassword] = useState('')
   let [currentPassword, setCurrentPassword] = useState('')
   let [errorMessage, setErrorMesage] = useState('')
-  const [user, setUser] = useState({} as User)
+  const [user] = useState({} as User)
   let [username, setUsername] = useState('')
   const [avatar, setAvatar] = useState('')
   const [background, setBackground] = useState('')
